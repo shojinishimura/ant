@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== 
+     2009/02/07 22:26:30                                                        
+
+     build-common    
+     define standard targets, filesets and properties
+                   
+     shoji                                                                
+     ====================================================================== -->
+<project name="build-common"
+         default="package"
+         xmlns:ivy="antlib:org.apache.ivy.ant"
+         basedir="./">
+
+    <property file="build-common.properties" />
+
+    <condition property="have.resource.dir">
+        <available file="src/main/resources" />
+    </condition>
+    <condition property="have.java.dir">
+        <available file="src/main/java" />
+    </condition>
+    <condition property="have.test.resource.dir">
+        <available file="src/test/resources" />
+    </condition>
+    <condition property="have.test.java.dir">
+        <available file="src/test/java" />
+    </condition>
+
+    <presetdef name="jar">
+        <jar destfile="${target.dir}/${artifact.name}.jar">
+            <fileset dir="${classes.dir}">
+                <include name="**/*" />
+            </fileset>
+        </jar>
+    </presetdef>
+
+    <patternset id="war.lib.set">
+        <include name="**/*.jar" />
+    </patternset>
+
+    <presetdef name="war">
+        <war destfile="${target.dir}/${artifact.name}.war"
+             webxml="${webapp.dir}/web.xml">
+            <classes dir="${classes.dir}">
+                <include name="**/*" />
+            </classes>
+            <lib dir="${lib.dir}">
+                <patternset refid="war.lib.set" />
+            </lib>
+            <webinf dir="${webapp.dir}/WEB-INF">
+                <include name="**/*" />
+            </webinf>
+        </war>
+    </presetdef>
+
+    <!-- ================================= 
+          target: validate              
+         ================================= -->
+    <target name="validate"
+            description="--> Validate the project is correct and all necessary information is available.">
+
+    </target>
+
+    <!-- ================================= 
+          target: initialize              
+         ================================= -->
+    <target name="initialize" description="--> Initialize the build process.">
+        <mkdir dir="${target.dir}" />
+        <mkdir dir="${classes.dir}" />
+        <mkdir dir="${test.classes.dir}" />
+    </target>
+
+    <!-- ================================= 
+          target: generate-sources              
+         ================================= -->
+    <target name="generate-sources"
+            depends="initialize"
+            description="--> Generate any source code for inclusion in compilation.">
+        <mkdir dir="${gen.dir}" />
+        <mkdir dir="${gen.java.dir}" />
+    </target>
+
+
+    <!-- ================================= 
+          target: process-sources              
+         ================================= -->
+    <target name="process-sources"
+            depends="initialize"
+            description="--> Process the source code, for example to filter any values.">
+
+    </target>
+
+    <!-- ================================= 
+          target: generate-resources              
+         ================================= -->
+    <target name="generate-resources"
+            depends="initialize"
+            description="--> Generate resources for inclusion in the package.">
+
+    </target>
+
+
+    <!-- ================================= 
+          target: process-resources              
+         ================================= -->
+    <target name="process-resources"
+            depends="initialize"
+            description="--> Copy and process the resources into the destination directory, ready for packaging."
+            if="${have.resource.dir}">
+        <copy todir="${classes.dir}">
+            <fileset dir="${rsc.dir}">
+                <include name="**/*" />
+            </fileset>
+        </copy>
+    </target>
+
+
+    <!-- ================================= 
+          target: compile              
+         ================================= -->
+    <target name="compile"
+            depends="generate-sources, process-sources"
+            description="--> Compile the source code of the project.">
+        <javac destdir="${classes.dir}" classpathref="compile.classpath">
+            <src dir="${java.dir}" />
+            <src dir="${gen.java.dir}" />
+        </javac>
+    </target>
+
+
+    <!-- ================================= 
+          target: process-classes              
+         ================================= -->
+    <target name="process-classes"
+            depends="compile"
+            description="--> Post-process the generated files from compilation, for example to do byte code enhancement on Java classes.">
+
+    </target>
+
+
+    <!-- ================================= 
+          target: generate-test-sources              
+         ================================= -->
+    <target name="generate-test-sources"
+            depends="initialize"
+            description="--> Generate any test source code for inclusion in compilation.">
+        <mkdir dir="${gen.dir}" />
+        <mkdir dir="${gen.test.java.dir}" />
+    </target>
+
+
+    <!-- ================================= 
+          target: process-test-sources              
+         ================================= -->
+    <target name="process-test-sources"
+            depends="initialize"
+            description="--> Process the test source code, for example to filter any values.">
+
+    </target>
+
+
+    <!-- ================================= 
+          target: generate-test-resources              
+         ================================= -->
+    <target name="generate-test-resources"
+            depends="initialize"
+            description="--> Create resources for testing.">
+
+    </target>
+
+
+
+    <!-- ================================= 
+          target: process-test-resources              
+         ================================= -->
+    <target name="process-test-resources"
+            depends="initialize"
+            description="--> Create resourcecs for testing.">
+        <copy todir="${test.classes.dir}">
+            <fileset dir="${test.rsc.dir}">
+                <include name="**/*" />
+            </fileset>
+        </copy>
+    </target>
+
+
+    <!-- ================================= 
+          target: test-compile              
+         ================================= -->
+    <target name="test-compile"
+            depends="generate-test-sources, process-test-sources, compile"
+            description="--> Compile the test source code into the test destination directory.">
+        <javac destdir="${test.classes.dir}"
+               classpathref="test.compile.classpath">
+            <src dir="${test.java.dir}" />
+            <src dir="${gen.test.java.dir}" />
+        </javac>
+    </target>
+
+    <!-- ================================= 
+          target: test              
+         ================================= -->
+    <target name="test"
+            depends="test-compile, generate-test-resources, process-test-resources"
+            description="--> Run tests using a suitable unit testing framework. These tests should not require the code be packaged or deployed.">
+        <junit>
+            <classpath>
+                <dirset dir="${test.classes.dir}" />
+                <path ref="test.java.classpath" />
+            </classpath>
+            <batchtest>
+                <fileset dir="${test.classes.dir}">
+                    <include name="**/*Test.class" />
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <!-- ================================= 
+          target: package              
+         ================================= -->
+    <target name="package"
+            depends="process-classes, generate-resources, process-resources"
+            description="--> Take the compiled code and package it in its distributable format, such as a JAR.">
+        <jar />
+    </target>
+
+    <!-- ================================= 
+          target: pre-integration-test              
+         ================================= -->
+    <target name="pre-integration-test"
+            description="--> Perform actions required before integration tests are executed. this may involve things such as setting up the required environment.">
+
+    </target>
+
+
+    <!-- ================================= 
+          target: integration-test              
+         ================================= -->
+    <target name="integration-test"
+            depends="package"
+            description="--> Process and deploy the package if necessary into an environment where integration tests can be run.">
+
+    </target>
+
+
+    <!-- ================================= 
+          target: post-integration-test              
+         ================================= -->
+    <target name="post-integration-test"
+            description="--> Perform actions required after integration tests have been executed. This may including cleaning up the environment.">
+
+    </target>
+
+
+    <!-- ================================= 
+          target: verify              
+         ================================= -->
+    <target name="verify"
+            depends="package"
+            description="--> Run any checks to verify the package is valid and meets quality criteria.">
+
+    </target>
+
+
+    <!-- ================================= 
+          target: install              
+         ================================= -->
+    <target name="install"
+            depends="package"
+            description="--> Install the package to the local repository, for use as a dependency in other projects locally.">
+
+    </target>
+
+    <!-- ================================= 
+          target: deploy              
+         ================================= -->
+    <target name="deploy"
+            depends="package"
+            description="--> Done in an integration or release environment, copies the final package to the remote repository for sharing with other developers and projects.">
+
+    </target>
+
+    <!-- ================================= 
+          target: clean              
+         ================================= -->
+    <target name="clean"
+            description="--> Clean the genratated codes and resources.">
+        <delete dir="${target.dir}" />
+    </target>
+
+</project>

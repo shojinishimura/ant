@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== 
+     2009/02/07 22:28:00                                                        
+
+     project    
+     description
+                   
+     shoji                                                                
+     ====================================================================== -->
+<project name="project" default="package">
+    <description>
+            description
+    </description>
+
+    <property file="build.properties"/>
+    <import file="build-common.xml"/>
+    
+    <!--
+      Project-specific Targets
+    -->
+</project>
